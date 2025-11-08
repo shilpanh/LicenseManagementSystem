@@ -1,0 +1,21 @@
+﻿@baseUrl = http://localhost:5206
+
+### 🔹 Test: Get all licenses
+GET {{baseUrl}}/api/licenses
+Accept: application/json
+X-Tenant-ID: agency1
+
+###
+
+### 🔹 Test: Create a new license
+POST {{baseUrl}}/api/licenses
+Content-Type: application/json
+Accept: application/json
+X-Tenant-ID: agency1
+
+{
+  "licenseNumber": "LIC-2025-001",
+  "holderName": "John Doe",
+  "issueDate": "2025-11-06T00:00:00Z",
+  "expiryDate": "2026-11-06T00:00:00Z"
+}
