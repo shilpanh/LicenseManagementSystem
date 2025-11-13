@@ -1,4 +1,5 @@
 ﻿using LicenseService.API.Domain;
+using LicenseService.API.Domain.Entity;
 using LicenseService.API.Infrastructure.Tenant;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
@@ -15,6 +16,8 @@ namespace LicenseService.API.Data
         }
 
         public DbSet<LicenseApplication> LicenseApplications { get; set; }
+        public DbSet<User> Users { get; set; }
+
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

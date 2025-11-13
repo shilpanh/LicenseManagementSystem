@@ -1,5 +1,4 @@
 using LicenseService.API.Infrastructure;
-using LicenseService.API.Application;
 using MediatR;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
@@ -9,12 +8,22 @@ using LicenseService.API.Data;
 using LicenseService.API.Infrastructure.Tenant;
 using Microsoft.EntityFrameworkCore;
 using LicenseService.API.Filters;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Options;
 using LicenseService.API.Application.Interfaces;
 using LicenseService.API.Infrastructure.Identity;
+using LicenseService.API.Application.Services;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Add CORS
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAll", policy =>
+    {
+        policy.AllowAnyOrigin()
+              .AllowAnyMethod()
+              .AllowAnyHeader();
+    });
+});
 
 // Configuration
 var configuration = builder.Configuration;
@@ -93,6 +102,9 @@ builder.Services.AddAuthorization();
 builder.Services.AddHangfire(config => config.UseMemoryStorage());
 builder.Services.AddHangfireServer();
 
+// Register LicenseRenewalService
+builder.Services.AddScoped<LicenseRenewalService>();
+
 // Application services
 builder.Services.AddApplicationServices();
 
@@ -101,6 +113,9 @@ builder.Services.AddScoped<IUserContext, UserContext>();
 
 
 var app = builder.Build();
+
+// Apply CORS
+app.UseCors("AllowAll");
 
 app.UseSwagger();
 app.UseSwaggerUI();
@@ -113,6 +128,13 @@ app.UseMiddleware<TenantMiddleware>(); // sets Tenant in scoped ITenantProvider
 app.UseAuthorization();
 
 app.UseHangfireDashboard("/hangfire", new DashboardOptions { Authorization = new[] { new HangfireAllowAllFilter() } });
+app.UseHangfireDashboard("/jobs");
+
+// Schedule daily job
+RecurringJob.AddOrUpdate<LicenseRenewalService>(
+    "license-renewal-job",
+    service => service.RenewExpiredLicensesAsync(),
+    Cron.Daily);
 app.MapControllers();
 
 app.Run();

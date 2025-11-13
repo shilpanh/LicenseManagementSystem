@@ -4,12 +4,14 @@ using MediatR;
 using LicenseService.API.Application.Command;
 using LicenseService.API.Data;
 using LicenseService.API.Application.Interfaces;
+using LicenseService.API.Filters;
 
 
 namespace LicenseService.API.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
+    [ServiceFilter(typeof(TenantAuthorizationFilter))]
     public class ApplicationsController : ControllerBase
     {
         private readonly IMediator _mediator;
@@ -32,6 +34,15 @@ namespace LicenseService.API.Controllers
             if (app is null) return NotFound();
             return Ok(app);
         }
+
+        [HttpGet]
+        [Authorize]
+        public IActionResult GetAll([FromServices] LicenseDbContext db)
+        {
+            var apps = db.LicenseApplications.ToList();
+            return Ok(apps);
+        }
+
     }
 
     public class SubmitDto

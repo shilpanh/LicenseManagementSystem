@@ -12,7 +12,7 @@ namespace LicenseService.API.Infrastructure
             services.AddScoped<ITenantProvider, HeaderTenantProvider>();
 
             services.AddDbContext<LicenseDbContext>(opts =>
-                opts.UseSqlServer(config.GetConnectionString("DefaultConnection")));
+                opts.UseSqlite(config.GetConnectionString("DefaultConnection")));
 
             return services;
         }

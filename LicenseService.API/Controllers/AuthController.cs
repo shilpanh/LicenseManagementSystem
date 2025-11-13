@@ -1,4 +1,6 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using LicenseService.API.Data;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 using System;
@@ -6,22 +8,33 @@ using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+using LicenseService.API.Domain.Entity;
 
 [Route("api/[controller]")]
 [ApiController]
 public class AuthController : ControllerBase
 {
     private readonly IConfiguration _configuration;
+    private readonly LicenseDbContext _dbContext;
 
-    public AuthController(IConfiguration configuration)
+    public AuthController(IConfiguration configuration, LicenseDbContext dbContext)
     {
         _configuration = configuration;
+        _dbContext = dbContext;     
+
     }
 
     [HttpPost("login")]
-    public IActionResult Login([FromBody] LoginRequest request)
+    public async Task<IActionResult> Login([FromBody] LoginRequest request)
     {
-        // Replace this with real user validation (e.g., from database)
+        // 1. Find user from DB
+        var user = await _dbContext.Users.SingleOrDefaultAsync(u => u.Username == request.Username);
+        if (user == null)
+            return Unauthorized("Invalid username or password");
+
+        // 2. Verify password
+        if (user.PasswordHash != request.Password)
+            return Unauthorized("Invalid username or password");
         if (request.Username != "admin" || request.Password != "password123")
             return Unauthorized("Invalid username or password");
 
@@ -36,7 +49,7 @@ public class AuthController : ControllerBase
             tenantId = Guid.Parse("11111111-1111-1111-1111-111111111111");
             var role = "Applicant";
                        
-            var user = new
+            user = new User()
             {
                 Id = Guid.NewGuid(),       
                 Username = request.Username
